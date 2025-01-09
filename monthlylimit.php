@@ -27,7 +27,7 @@ class MonthlyLimit extends Module {
         parent::__construct();
 
         $this->displayName = $this->l('Monthly Limit'); 
-        $this->description = $this->l('Este módulo permite controlar las compras mensuales de los empleados en la tienda estableciendo límites específicos. Define un importe máximo de compra mensual, el número máximo de veces que un empleado puede comprar cada mes o la cantidad total de productos que cada empleado puede adquirir mensualmente.');
+        $this->description = $this->l('Este módulo permite controlar las compras mensuales de los empleados en la tienda estableciendo límites específicos. Define un importe máximo de compra mensual, el número máximo de veces que un empleado puede comprar cada mes o la cantidad total de cada uno de los productos que cada empleado puede adquirir mensualmente.');
     }
 
     public function install(){
@@ -37,9 +37,28 @@ class MonthlyLimit extends Module {
         
         Configuration::updateValue('MONTHLY_LIMIT_EUROS', 0); // Limit purchase amount - 0 unlimited
         Configuration::updateValue('MONTHLY_LIMIT_TIMES', 0); // Limit times - 0 unlimited
-        Configuration::updateValue('MONTHLY_LIMIT_PRODUCTS', 0); // Limit products - 0 unlimited
+        
+        if (!Db::getInstance()->execute('
+            CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'monthlylimit_products_limit` (
+                `id_product` INT UNSIGNED NOT NULL,
+                `quantity` INT(3) NOT NULL DEFAULT 0,
+                PRIMARY KEY (`id_product`),
+                CONSTRAINT `fk_id_product` FOREIGN KEY (`id_product`) REFERENCES `' . _DB_PREFIX_ . 'product`(`id_product`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ')) {
+            $this->_errors[] = $this->l('Error creating monthlylimit_products_limit table.');
+            return false;
+        }
 
         if (!$this->registerHook('actionCartUpdateQuantityBefore')) {
+            return false;
+        }
+
+        if(!$this->registerHook('displayAdminProductsExtra')) {
+            return false;
+        }
+
+        if(!$this->registerHook('actionProductUpdate')) {
             return false;
         }
 
@@ -160,6 +179,30 @@ class MonthlyLimit extends Module {
         } else {
             return true;
         }
+    }
+
+    public function hookDisplayAdminProductsExtra($params) {
+        $productId = (int) Tools::getValue('id_product');
+        
+        $sql = 'SELECT quantity FROM ' . _DB_PREFIX_ . 'monthlylimit_products_limit WHERE id_product = ' . (int) $productId;
+        $monthlyLimitProducts = Db::getInstance()->getValue($sql);
+        
+        $this->context->smarty->assign([
+            'monthlyLimitProducts' => $monthlyLimitProducts
+        ]);
+        
+        return $this->display(__FILE__, 'views/templates/admin/admin_product_extra.tpl');
+    }
+
+    public function hookActionProductUpdate($params) {
+        $productId = (int) $params['id_product'];
+        $quantity = (int) Tools::getValue('quantity');
+
+        $sql = 'INSERT INTO ' . _DB_PREFIX_ . 'monthlylimit_products_limit (id_product, quantity) 
+                VALUES (' . $productId . ', ' . $quantity . ') 
+                ON DUPLICATE KEY UPDATE quantity = ' . $quantity;
+
+        Db::getInstance()->execute($sql);
     }
     
 }

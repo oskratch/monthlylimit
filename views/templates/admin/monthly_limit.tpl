@@ -26,14 +26,6 @@
                 <div class="col-lg-8">
                     <input type="text" name="monthly_limit_times" id="monthly_limit_times" value="{$monthly_limit_times}" required />
                 </div>
-            </div>										
-            <div class="form-group">
-                <label class="control-label col-lg-4 required">
-                    {l s='Número de productos de una misma referencia'}
-                </label>
-                <div class="col-lg-8">
-                    <input type="text" name="monthly_limit_products" id="monthly_limit_products" value="{$monthly_limit_products}" required />
-                </div>
             </div>
         </div>
         <div class="panel-footer">

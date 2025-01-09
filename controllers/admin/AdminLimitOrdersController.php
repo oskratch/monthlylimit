@@ -17,7 +17,6 @@ class AdminLimitOrdersController extends ModuleAdminController {
         if (Tools::isSubmit('btnSubmit')) {
             Configuration::updateValue('MONTHLY_LIMIT_EUROS', (int)Tools::getValue('monthly_limit_euros')); 
             Configuration::updateValue('MONTHLY_LIMIT_TIMES', (int)Tools::getValue('monthly_limit_times'));
-            Configuration::updateValue('MONTHLY_LIMIT_PRODUCTS', (int)Tools::getValue('monthly_limit_products'));
         }
     }    
 
@@ -26,7 +25,6 @@ class AdminLimitOrdersController extends ModuleAdminController {
         $this->context->smarty->assign(array(
             'monthly_limit_euros' => (int)Configuration::get('MONTHLY_LIMIT_EUROS'),
             'monthly_limit_times' => (int)Configuration::get('MONTHLY_LIMIT_TIMES'),
-            'monthly_limit_products' => (int)Configuration::get('MONTHLY_LIMIT_PRODUCTS'),
             'module_dir' => $this->module->getPathUri(),
             '_token' => Tools::getAdminTokenLite('AdminOrders')
         ));
